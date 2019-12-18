@@ -1,0 +1,22 @@
+{
+  "name": "1kmenu/dbm-adapter",
+  "description": "PDO Mysql Adapter for \\XrTools\\DatabaseManager Interface",
+  "type": "library",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Dmitriy Lukin",
+      "email": "lukin.d87@gmail.com"
+    }
+  ],
+  "minimum-stability": "dev",
+  "require": {
+    "1kmenu/database-manager": "@dev",
+    "ext-pdo": "*"
+  },
+  "autoload": {
+    "psr-4": {
+      "XrTools\\": "src"
+    }
+  }
+}
