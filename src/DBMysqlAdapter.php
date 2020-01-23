@@ -160,6 +160,38 @@ class DBMysqlAdapter implements DatabaseManager {
 		return $this->connection;
 	}
 	
+	/**
+	 * MySQL transaction start
+	 */
+	public function start()
+	{
+		// get connection
+		$db = $this->getConnection();
+		
+		$db->beginTransaction();
+	}
+	
+	/**
+	 * MySQL transaction rollback
+	 */
+	public function rollback()
+	{
+		// get connection
+		$db = $this->getConnection();
+		
+		$db->rollBack();
+	}
+	
+	/**
+	 * MySQL transaction commit
+	 */
+	public function commit()
+	{
+		// get connection
+		$db = $this->getConnection();
+		
+		$db->commit();
+	}
 	
 	/**
 	 * Get count sql query
