@@ -62,7 +62,7 @@ class DBMysqlAdapter implements DatabaseManager {
 
 		$this->lastInsertId = $db->lastInsertId();
 		
-		return $this->lastInsertId ? $this->lastInsertId : true;
+		return $this->lastInsertId ? (int) $this->lastInsertId : true;
 	}
 
 	public function getAffectedRows(){
@@ -127,7 +127,7 @@ class DBMysqlAdapter implements DatabaseManager {
 	 */
 	public function fetchArrayWithCount(string $query, array $params = null, array $opt = []){
 		return [
-			'count' => $this->fetchColumn($this->getExtractCountSQL($query), $params),
+			'count' => (int) $this->fetchColumn($this->getExtractCountSQL($query), $params),
 			'items' => $this->fetchArray($query, $params) ,
 		];
 	}
