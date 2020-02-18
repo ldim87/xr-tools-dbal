@@ -10,13 +10,13 @@ namespace XrTools;
  */
 class DBMysqlAdapter implements DatabaseManager {
 
-	private $connection;
+	protected $connection;
 
-	private $connectionParams;
+	protected $connectionParams;
 
-	private $lastAffectedRows = 0;
+	protected $lastAffectedRows = 0;
 
-	private $lastInsertId = 0;
+	protected $lastInsertId = 0;
 
 	function __construct(array $connectionParams = null){
 		// connection settings
@@ -25,7 +25,7 @@ class DBMysqlAdapter implements DatabaseManager {
 		}
 	}
 
-	public function validateSettings(array $settings){
+	protected function validateSettings(array $settings){
 		// mandatory settings
 		if(
 			empty($settings['dbname']) || 
@@ -132,7 +132,7 @@ class DBMysqlAdapter implements DatabaseManager {
 		];
 	}
 
-	public function connect(array $settings){
+	protected function connect(array $settings){
 		// validate settings
 		$settings = $this->validateSettings($settings);
 
@@ -151,7 +151,7 @@ class DBMysqlAdapter implements DatabaseManager {
 		return $connection;
 	}
 
-	public function getConnection(){
+	protected function getConnection(){
 		// connect if not connected
 		if(!isset($this->connection)){
 			$this->connection = $this->connect($this->connectionParams);
@@ -269,6 +269,78 @@ class DBMysqlAdapter implements DatabaseManager {
 		);
 	}
 	
-	
+	/**
+	 * Stub
+	 * @return array
+	 */
+	public function getDebugMessages(){
+		return [];
+	}
 
+	/**
+	 * Stub
+	 * @return array
+	 */
+	public function getQueryCollection(){
+		return [];
+	}
+
+	/**
+	 * Insert / Update table via params
+	 * @param array  $data       Table data
+	 * @param string $table_name Table name
+	 * @param mixed  $index      Table update key (id or opt.index_key)
+	 * @param array  $opt        Options
+	 */
+	public function set(array $data, string $table_name, $index = null, array $opt = []){
+		
+		// empty data |or  empty table name
+		if(!$data || !strlen($table_name)){
+			return ['status' => false, 'message' => 'Empty input'];
+		}
+		
+		$debug = !empty($opt['debug']);
+		
+		// create sql query
+		$sql = '';
+		$params = [];
+		
+		// manual WHERE ($index priority)
+		$where = $opt['where'] ?? '';
+		$where_vals = !empty($opt['where_vals']) && is_array($opt['where_vals']) ? $opt['where_vals'] : [];
+		
+		foreach ($data as $key => $value) {
+			// add to query
+			if($sql) $sql .= ', ';
+			
+			$sql .= '`'.$key.'`=?';
+			$params[] = $value;
+		}
+		
+		// Update by index_key (id)
+		if($index){
+			$index_key = $opt['index_key'] ?? 'id';
+			$where = 'WHERE `'.$index_key.'`=?';
+			
+			$params[] = $index;
+		}
+		// Update through manual WHERE
+		elseif($where && $where_vals){
+			foreach ($where_vals as $key => $val){
+				$params[] = $val;
+			}
+		}
+
+		// construct query
+		$query = ($where ? 'UPDATE' : 'INSERT') . " `{$table_name}` SET {$sql} {$where}";
+
+		return $this->query(
+			$query,
+			$params,
+			[
+				'debug' => $debug,
+				'return' => $opt['return'] ?? null
+			]
+		);
+	}
 }
