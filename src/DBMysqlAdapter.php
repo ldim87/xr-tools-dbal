@@ -343,4 +343,32 @@ class DBMysqlAdapter implements DatabaseManager {
 			]
 		);
 	}
+
+	/**
+	 * Создание части sql запроса из массива
+	 * @param array $data
+	 * @param string $glue
+	 * @return array
+	 */
+	public function genPartSQL(array $data = [], string $glue = ', '): array
+	{
+		$part_sql = [];
+		$param = [];
+
+		foreach ($data as $key => $value)
+		{
+			if (is_null($value)) {
+				$part_sql []= '`'.$key.'` = NULL';
+			}
+			else {
+				$part_sql []= '`'.$key.'` = ?';
+				$param []= $value;
+			}
+		}
+
+		return [
+			implode($glue, $part_sql),
+			$param
+		];
+	}
 }
