@@ -273,14 +273,6 @@ class DBMysqlAdapter implements DatabaseManager {
 	 * Stub
 	 * @return array
 	 */
-	public function getDebugMessages(){
-		return [];
-	}
-
-	/**
-	 * Stub
-	 * @return array
-	 */
 	public function getQueryCollection(){
 		return [];
 	}
