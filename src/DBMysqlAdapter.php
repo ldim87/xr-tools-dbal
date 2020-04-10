@@ -5,6 +5,9 @@
 
 namespace XrTools;
 
+use \PDO;
+use \PDOException;
+
 /**
  * PDO Mysql Adapter for \XrTools\DatabaseManager Interface
  */
@@ -83,7 +86,7 @@ class DBMysqlAdapter implements DatabaseManager {
 			$result = $db->query($query);
 		}
 
-		return $result->rowCount() ? $result->fetch(\PDO::FETCH_NUM)[0] : '';
+		return $result->rowCount() ? $result->fetch(PDO::FETCH_NUM)[0] : '';
 	}
 	
 	public function fetchRow(string $query, array $params = null, array $opt = []){
@@ -98,7 +101,7 @@ class DBMysqlAdapter implements DatabaseManager {
 			$result = $db->query($query);
 		}
 
-		return $result->rowCount() ? $result->fetch(\PDO::FETCH_ASSOC) : [];
+		return $result->rowCount() ? $result->fetch(PDO::FETCH_ASSOC) : [];
 	}
 
 	public function fetchArray(string $query, array $params = null, array $opt = []){
@@ -113,7 +116,7 @@ class DBMysqlAdapter implements DatabaseManager {
 			$result = $db->query($query);
 		}
 
-		return $result->rowCount() ? $result->fetchAll(\PDO::FETCH_ASSOC) : [];
+		return $result->rowCount() ? $result->fetchAll(PDO::FETCH_ASSOC) : [];
 	}
 	
 	/**
@@ -136,19 +139,30 @@ class DBMysqlAdapter implements DatabaseManager {
 		// validate settings
 		$settings = $this->validateSettings($settings);
 
-		// connect
-		$connection = new \PDO(
-			'mysql:host='.$settings['host'].';dbname='.$settings['dbname'].';charset='.$settings['charset'],
-			$settings['username'],
-			$settings['password'],
-			[
-				\PDO::ATTR_EMULATE_PREPARES => false,
-				\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION
-			]
-		);
+		$pdo_settings = [
+			PDO::ATTR_EMULATE_PREPARES => false,
+			PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+		];
 
-		// get handler
-		return $connection;
+		try {
+
+			// connect
+			$connection = new PDO(
+				'mysql:host='.$settings['host'].';dbname='.$settings['dbname'].';charset='.$settings['charset'],
+				$settings['username'],
+				$settings['password'],
+				$pdo_settings
+			);
+
+			// get handler
+			return $connection;
+		}
+		// resolve broken connection
+		catch (PDOException $e) {
+			
+			// rethrow connection exception			
+			throw new DBConnectionException($e->getMessage());
+		}
 	}
 
 	protected function getConnection(){
