@@ -299,17 +299,56 @@ class DBMysqlAdapter implements DatabaseManager {
 	 * @param array  $opt        Options
 	 */
 	public function set(array $data, string $table_name, $index = null, array $opt = []){
+				
+		$query_data = $this->getInsertUpdateQuery($data, $table_name, $index, $opt);
+
+		if(empty($query_data['query'])){
+			return ['status' => false, 'message' => 'Empty query!'];
+		}
+
+		return $this->query(
+			$query_data['query'],
+			$query_data['params'],
+			[
+				'debug' => !empty($opt['debug']),
+				'return' => $opt['return'] ?? null
+			]
+		);
+	}
+
+	public function getInsertUpdateQuery(array $data, string $table_name, $index = null, array $opt = []){
 		
+		$result = [
+			'query' => '',
+			'params' => []
+		];
+
 		// empty data |or  empty table name
 		if(!$data || !strlen($table_name)){
-			return ['status' => false, 'message' => 'Empty input'];
+			return $result;
 		}
-		
-		$debug = !empty($opt['debug']);
-		
+
+		// multiple row input data
+		if(isset($data[0])){
+			$result = $this->getMultiRowSetQuery($data, $table_name, $opt);
+		}
+		// single row input data
+		else {
+			$result = $this->getSingleRowSetQuery($data, $table_name, $index, $opt);
+		}
+
+		return $result;
+	}
+
+	protected function getSingleRowSetQuery(array $data, string $table_name, $index = null, array $opt = []){
+
+		$result = [
+			'query' => '',
+			'params' => []
+		];
+
 		// create sql query
 		$sql = '';
-		$params = [];
 		
 		// manual WHERE ($index priority)
 		$where = $opt['where'] ?? '';
@@ -320,7 +359,7 @@ class DBMysqlAdapter implements DatabaseManager {
 			if($sql) $sql .= ', ';
 			
 			$sql .= '`'.$key.'`=?';
-			$params[] = $value;
+			$result['params'][] = $value;
 		}
 		
 		// Update by index_key (id)
@@ -328,26 +367,53 @@ class DBMysqlAdapter implements DatabaseManager {
 			$index_key = $opt['index_key'] ?? 'id';
 			$where = 'WHERE `'.$index_key.'`=?';
 			
-			$params[] = $index;
+			$result['params'][] = $index;
 		}
 		// Update through manual WHERE
 		elseif($where && $where_vals){
 			foreach ($where_vals as $key => $val){
-				$params[] = $val;
+				$result['params'][] = $val;
 			}
 		}
 
 		// construct query
-		$query = ($where ? 'UPDATE' : 'INSERT') . " `{$table_name}` SET {$sql} {$where}";
+		$result['query'] = ($where ? 'UPDATE' : 'INSERT') . " `{$table_name}` SET {$sql} {$where}";
 
-		return $this->query(
-			$query,
-			$params,
-			[
-				'debug' => $debug,
-				'return' => $opt['return'] ?? null
-			]
-		);
+		return $result;
+	}
+
+	protected function getMultiRowSetQuery(array $data, string $table_name, array $opt = []){
+
+		$result = [
+			'query' => '',
+			'params' => []
+		];
+		
+		if(!isset($data[0])){
+			return $result;
+		}
+
+		// get keys from first row (as template)
+		$keys = array_keys($data[0]);
+
+		$on_duplicate_key_update = !empty($opt['on_duplicate_key_update']) && is_array($opt['on_duplicate_key_update'])
+			? ' ON DUPLICATE KEY UPDATE ' . implode(', ', array_map(function($item){ return "`{$item}`=VALUES(`{$item}`)"; }, $opt['on_duplicate_key_update']))
+			: '';
+
+		$result['query'] = 'INSERT INTO `'.$table_name.'` (`'.implode('`,`', $keys).'`) VALUES ' .
+			implode(', ', array_fill(
+				0, count($data), '('.implode(',', array_fill(0, count($keys), '?')).')'
+			)) . 
+			$on_duplicate_key_update;
+
+		$result['params'] = array_merge(...array_map(
+			function($item){
+				return array_values($item);
+			},
+			$data
+		));
+
+		return $result;
 	}
 
 	/**
