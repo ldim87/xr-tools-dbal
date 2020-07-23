@@ -376,8 +376,14 @@ class DBMysqlAdapter implements DatabaseManager {
 			}
 		}
 
+		$insert_update = $where ? 'UPDATE' : 'INSERT';
+
+		$on_duplicate_key_update = !empty($opt['on_duplicate_key_update']) && is_array($opt['on_duplicate_key_update']) && $insert_update == 'INSERT'
+			? ' ON DUPLICATE KEY UPDATE ' . implode(', ', array_map(function($item){ return "`{$item}`=VALUES(`{$item}`)"; }, $opt['on_duplicate_key_update']))
+			: '';
+
 		// construct query
-		$result['query'] = ($where ? 'UPDATE' : 'INSERT') . " `{$table_name}` SET {$sql} {$where}";
+		$result['query'] = "{$insert_update} `{$table_name}` SET {$sql} {$where}{$on_duplicate_key_update}";
 
 		return $result;
 	}
