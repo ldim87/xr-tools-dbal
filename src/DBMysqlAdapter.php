@@ -21,6 +21,8 @@ class DBMysqlAdapter implements DatabaseManager {
 
 	protected $lastInsertId = 0;
 
+	protected $isTransactionStarted = false;
+
 	function __construct(array $connectionParams = null){
 		// connection settings
 		if(isset($connectionParams)){
@@ -173,38 +175,58 @@ class DBMysqlAdapter implements DatabaseManager {
 
 		return $this->connection;
 	}
-	
+
 	/**
-	 * MySQL transaction start
+	 * @param bool $debug
+	 * @return bool
+	 * @throws \Exception
 	 */
-	public function start()
+	public function start(bool $debug = false): bool
 	{
+		if ($this->isTransactionStarted) {
+			throw new \Exception('Transaction has already started');
+		}
+
 		// get connection
 		$db = $this->getConnection();
-		
-		$db->beginTransaction();
+
+		$res = $db->beginTransaction();
+
+		$this->isTransactionStarted = true;
+
+		return $res;
 	}
-	
+
 	/**
-	 * MySQL transaction rollback
+	 * @param bool $debug
+	 * @return bool
 	 */
-	public function rollback()
+	public function rollback(bool $debug = false): bool
 	{
 		// get connection
 		$db = $this->getConnection();
-		
-		$db->rollBack();
+
+		$res = $db->rollBack();
+
+		$this->isTransactionStarted = false;
+
+		return $res;
 	}
-	
+
 	/**
-	 * MySQL transaction commit
+	 * @param bool $debug
+	 * @return bool
 	 */
-	public function commit()
+	public function commit(bool $debug = false): bool
 	{
 		// get connection
 		$db = $this->getConnection();
 		
-		$db->commit();
+		$res = $db->commit();
+
+		$this->isTransactionStarted = false;
+
+		return $res;
 	}
 	
 	/**
