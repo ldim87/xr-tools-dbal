@@ -42,7 +42,7 @@ class DBMysqlAdapter implements DatabaseManager {
 		}
 
 		// optional setting
-		$settings['charset'] = $settings['charset'] ?? 'utf8';
+		$settings['charset'] = $settings['charset'] ?? 'utf8mb4';
 
 		return $settings;
 	}
