@@ -236,7 +236,8 @@ class DBMysqlAdapter implements DatabaseManager {
 	 *
 	 * @return mixed
 	 */
-	protected function getExtractCountSQL($mainQuery){
+	function getExtractCountSQL($mainQuery)
+	{
 		// Remove secondary requests for a while if there are any
 		[$query, $attach] = $this->getCountSQLNested($mainQuery);
 		
@@ -249,9 +250,9 @@ class DBMysqlAdapter implements DatabaseManager {
 		preg_match('/(GROUP BY)/is', $query, $preg_gb);
 		
 		// Depending on the type of getting the number of rows, we get it
-		if(empty($preg_gb)){
+		if (empty($preg_gb)) {
 			$query = preg_replace('/SELECT.*FROM/is', 'SELECT COUNT(*) FROM', $query);
-		}else{
+		} else {
 			// $query = preg_replace('/SELECT.*FROM/is', 'SELECT * FROM', $query);
 			$query = 'SELECT COUNT(*) FROM (' . $query . ') AS `tmp_count`';
 		}
