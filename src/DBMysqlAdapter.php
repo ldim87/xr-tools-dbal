@@ -120,22 +120,6 @@ class DBMysqlAdapter implements DatabaseManager {
 
 		return $result->rowCount() ? $result->fetchAll(PDO::FETCH_ASSOC) : [];
 	}
-	
-	/**
-	 * Getting data and the number of all rows
-	 *
-	 * @param string     $query
-	 * @param array|null $params
-	 * @param array      $opt
-	 *
-	 * @return array
-	 */
-	public function fetchArrayWithCount(string $query, array $params = null, array $opt = []){
-		return [
-			'count' => (int) $this->fetchColumn($this->getExtractCountSQL($query), $params),
-			'items' => $this->fetchArray($query, $params) ,
-		];
-	}
 
 	protected function connect(array $settings){
 		// validate settings
@@ -161,7 +145,7 @@ class DBMysqlAdapter implements DatabaseManager {
 		}
 		// resolve broken connection
 		catch (PDOException $e) {
-			
+
 			// rethrow connection exception			
 			throw new DBConnectionException($e->getMessage());
 		}
@@ -227,83 +211,6 @@ class DBMysqlAdapter implements DatabaseManager {
 		$this->isTransactionStarted = false;
 
 		return $res;
-	}
-	
-	/**
-	 * Get count sql query
-	 *
-	 * @param $mainQuery
-	 *
-	 * @return mixed
-	 */
-	function getExtractCountSQL($mainQuery)
-	{
-		// Remove secondary requests for a while if there are any
-		[$query, $attach] = $this->getCountSQLNested($mainQuery);
-		
-		// Remove from query "order by" and "limit"
-		$query = trim(
-			preg_replace('/(ORDER BY|LIMIT).*$/is', '', $query)
-		);
-		
-		// Find out if data is being grouped
-		preg_match('/(GROUP BY)/is', $query, $preg_gb);
-		
-		// Depending on the type of getting the number of rows, we get it
-		if (empty($preg_gb)) {
-			$query = preg_replace('/SELECT.*FROM/is', 'SELECT COUNT(*) FROM', $query);
-		} else {
-			// $query = preg_replace('/SELECT.*FROM/is', 'SELECT * FROM', $query);
-			$query = 'SELECT COUNT(*) FROM (' . $query . ') AS `tmp_count`';
-		}
-		
-		// Returning secondary requests to the site
-		return $this->setCountSQLNested($query, $attach);
-	}
-	
-	/**
-	 * Parse attachments
-	 *
-	 * @param $query
-	 *
-	 * @return array
-	 */
-	protected function getCountSQLNested($query){
-		$attach = [];
-		$i      = 1;
-		
-		$query = preg_replace_callback(
-			'/\((.*?)\)/is',
-			function($matches) use (&$attach, &$i){
-				$key          = '#prc' . $i++ . '#';
-				$attach[$key] = $matches[1];
-				
-				return '(' . $key . ')';
-			},
-			$query
-		);
-		
-		return [$query, $attach];
-	}
-	
-	/**
-	 * Collect attachments
-	 *
-	 * @param $query
-	 * @param $attach
-	 *
-	 * @return mixed
-	 */
-	protected function setCountSQLNested($query, $attach){
-		if(empty($attach)){
-			return $query;
-		}
-		
-		return str_replace(
-			array_keys($attach),
-			array_values($attach),
-			$query
-		);
 	}
 	
 	/**
@@ -443,33 +350,5 @@ class DBMysqlAdapter implements DatabaseManager {
 		));
 
 		return $result;
-	}
-
-	/**
-	 * Создание части sql запроса из массива
-	 * @param array $data
-	 * @param string $glue
-	 * @return array
-	 */
-	public function genPartSQL(array $data = [], string $glue = ', '): array
-	{
-		$part_sql = [];
-		$param = [];
-
-		foreach ($data as $key => $value)
-		{
-			if (is_null($value)) {
-				$part_sql []= '`'.$key.'` = NULL';
-			}
-			else {
-				$part_sql []= '`'.$key.'` = ?';
-				$param []= $value;
-			}
-		}
-
-		return [
-			implode($glue, $part_sql),
-			$param
-		];
 	}
 }
