@@ -23,7 +23,7 @@ class DBMysqlAdapter implements DatabaseManager {
 
 	protected $isTransactionStarted = false;
 
-	function __construct(array $connectionParams = null){
+	function __construct(?array $connectionParams = null){
 		// connection settings
 		if(isset($connectionParams)){
 			$this->setConnectionParams($connectionParams);
@@ -51,7 +51,7 @@ class DBMysqlAdapter implements DatabaseManager {
 		$this->connectionParams = $this->validateSettings($settings);
 	}
 
-	public function query(string $query, array $params = null, array $opt = []){
+	public function query(string $query, ?array $params = null, array $opt = []){
 		// get connection
 		$db = $this->getConnection();
 
@@ -75,7 +75,7 @@ class DBMysqlAdapter implements DatabaseManager {
 		return $this->lastAffectedRows;
 	}
 
-	public function fetchColumn(string $query, array $params = null, array $opt = []){
+	public function fetchColumn(string $query, ?array $params = null, array $opt = []){
 		// get connection
 		$db = $this->getConnection();
 
@@ -91,7 +91,7 @@ class DBMysqlAdapter implements DatabaseManager {
 		return $result->rowCount() ? $result->fetch(PDO::FETCH_NUM)[0] : '';
 	}
 	
-	public function fetchRow(string $query, array $params = null, array $opt = []){
+	public function fetchRow(string $query, ?array $params = null, array $opt = []){
 		// get connection
 		$db = $this->getConnection();
 
@@ -106,7 +106,7 @@ class DBMysqlAdapter implements DatabaseManager {
 		return $result->rowCount() ? $result->fetch(PDO::FETCH_ASSOC) : [];
 	}
 
-	public function fetchArray(string $query, array $params = null, array $opt = []){
+	public function fetchArray(string $query, ?array $params = null, array $opt = []){
 		// get connection
 		$db = $this->getConnection();
 
