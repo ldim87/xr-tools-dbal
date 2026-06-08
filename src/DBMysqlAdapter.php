@@ -88,7 +88,9 @@ class DBMysqlAdapter implements DatabaseManager {
 			$result = $db->query($query);
 		}
 
-		return $result->rowCount() ? $result->fetch(PDO::FETCH_NUM)[0] : '';
+		$row = $result->fetch(PDO::FETCH_NUM);
+
+		return $row === false ? '' : $row[0];
 	}
 	
 	public function fetchRow(string $query, ?array $params = null, array $opt = []){
@@ -103,7 +105,9 @@ class DBMysqlAdapter implements DatabaseManager {
 			$result = $db->query($query);
 		}
 
-		return $result->rowCount() ? $result->fetch(PDO::FETCH_ASSOC) : [];
+		$row = $result->fetch(PDO::FETCH_ASSOC);
+
+		return $row === false ? [] : $row;
 	}
 
 	public function fetchArray(string $query, ?array $params = null, array $opt = []){
@@ -118,7 +122,9 @@ class DBMysqlAdapter implements DatabaseManager {
 			$result = $db->query($query);
 		}
 
-		return $result->rowCount() ? $result->fetchAll(PDO::FETCH_ASSOC) : [];
+		$rows = $result->fetchAll(PDO::FETCH_ASSOC);
+
+		return $rows === false ? [] : $rows;
 	}
 
 	protected function connect(array $settings){
